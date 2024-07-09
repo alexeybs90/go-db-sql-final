@@ -39,12 +39,12 @@ func TestAddGetDelete(t *testing.T) {
 	parcel := getTestParcel()
 
 	// add
-	id, err := store.Add(parcel)
+	parcel.Number, err = store.Add(parcel)
 	require.NoError(t, err)
-	require.NotEmpty(t, id)
+	require.NotEmpty(t, parcel.Number)
 
 	// get
-	got, err := store.Get(id)
+	got, err := store.Get(parcel.Number)
 	require.NoError(t, err)
 	assert.Equal(t, parcel.Client, got.Client)
 	assert.Equal(t, parcel.Address, got.Address)
@@ -52,12 +52,12 @@ func TestAddGetDelete(t *testing.T) {
 	assert.Equal(t, parcel.CreatedAt, got.CreatedAt)
 
 	// delete
-	err = store.Delete(id)
+	err = store.Delete(parcel.Number)
 	require.NoError(t, err)
 
-	got, err = store.Get(id)
-	require.Equal(t, sql.ErrNoRows, err)
-	require.Empty(t, got)
+	_, err = store.Get(parcel.Number)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 // TestSetAddress проверяет обновление адреса
@@ -150,12 +150,10 @@ func TestGetByClient(t *testing.T) {
 	require.Equal(t, len(parcels), len(storedParcels))
 
 	// check
+	// assert.ElementsMatch(t, parcelMap, storedParcels)
 	for _, parcel := range storedParcels {
 		p, ok := parcelMap[parcel.Number]
 		require.Equal(t, true, ok)
-		assert.Equal(t, p.Client, parcel.Client)
-		assert.Equal(t, p.Address, parcel.Address)
-		assert.Equal(t, p.Status, parcel.Status)
-		assert.Equal(t, p.CreatedAt, parcel.CreatedAt)
+		assert.Equal(t, p, parcel)
 	}
 }
